@@ -1,0 +1,5 @@
+- Dispersion test
+- Gradient descent steps
+    - with/without momentum
+- Team agency - select which matches to focus on
+
