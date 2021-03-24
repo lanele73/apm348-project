@@ -51,7 +51,7 @@ def get_gameweek(df, cross_ref):
 
 def get_winstreak(df):
     teams = sorted(df.HomeTeam.unique())
-    ws = pd.DataFrame(np.zeros(shape=(38, len(teams))), index = range(1,39), columns = teams)
+    ws = pd.DataFrame(np.zeros(shape=(38, len(teams)), dtype=int), index = range(1,39), columns = teams)
 #     ws.index += 1
 
     for i in df.index:
@@ -74,7 +74,7 @@ def simulate_match(params, home_index, away_index):
 
     home_goals = np.random.poisson( lam = (params[0,home_index] * params[3,away_index]) )
     away_goals = np.random.poisson( lam = (params[1,home_index] * params[2,away_index]) )
-    return home_goals, away_goals
+    return int(home_goals), int(away_goals)
 
 
 def winner(result):
@@ -90,27 +90,27 @@ def standings(df):
     Given a dataframe of results, return final standings as a dataframe
     """
     columns = ["Team", "Points", "W", "D", "L", "GD", "GF", "GA"]
-    table = pd.DataFrame(data=np.zeros((20,8)), columns=columns)
+    table = pd.DataFrame(data=np.zeros((20,8), dtype=int), columns=columns)
     table["Team"] = list(teams_dict.values())
     for i, row in df.iterrows():
         home = row["HomeTeam"]
         away = row["AwayTeam"]
-        result = (row["FTHG"],row["FTAG"])
+        result = (int(row["FTHG"]),int(row["FTAG"]))
         win = winner(result)
         # update results
         if win == "H":
-            table.loc[table["Team"] == home, "Points"] += 3.
-            table.loc[table["Team"] == home, "W"] += 1.
-            table.loc[table["Team"] == away, "L"] += 1.
+            table.loc[table["Team"] == home, "Points"] += 3
+            table.loc[table["Team"] == home, "W"] += 1
+            table.loc[table["Team"] == away, "L"] += 1
         elif win == "A":
-            table.loc[table["Team"] == away, "Points"] += 3.
-            table.loc[table["Team"] == away, "W"] += 1.
-            table.loc[table["Team"] == home, "L"] += 1.
+            table.loc[table["Team"] == away, "Points"] += 3
+            table.loc[table["Team"] == away, "W"] += 1
+            table.loc[table["Team"] == home, "L"] += 1
         else:
-            table.loc[table["Team"] == home, "Points"] += 1.
-            table.loc[table["Team"] == away, "Points"] += 1.
-            table.loc[table["Team"] == home, "D"] += 1.
-            table.loc[table["Team"] == away, "D"] += 1.
+            table.loc[table["Team"] == home, "Points"] += 1
+            table.loc[table["Team"] == away, "Points"] += 1
+            table.loc[table["Team"] == home, "D"] += 1
+            table.loc[table["Team"] == away, "D"] += 1
         
         # update goals
         table.loc[table["Team"] == home, "GF"] += result[0]
