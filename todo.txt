@@ -1,5 +1,5 @@
 - Dispersion test (Ray)
 - Gradient descent steps (Lorenzo)
-    - with/without momentum 
+    - with/without momentum
 - Run simulations to see outcome (Ray)
 - Team agency - select which matches to focus on 
