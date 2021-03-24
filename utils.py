@@ -1,7 +1,5 @@
-
 import numpy as np
 import pandas as pd
-import requests
 
 cross_ref = pd.read_csv("https://raw.githubusercontent.com/footballcsv/england/master/2010s/2014-15/eng.1.csv")
 teams_dict = {
