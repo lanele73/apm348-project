@@ -52,7 +52,6 @@ def get_gameweek(df, cross_ref):
 def get_winstreak(df):
     teams = sorted(df.HomeTeam.unique())
     ws = pd.DataFrame(np.zeros(shape=(38, len(teams)), dtype=int), index = range(1,39), columns = teams)
-#     ws.index += 1
 
     for i in df.index:
         if df["MatchWeek"][i] < 38:
