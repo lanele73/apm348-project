@@ -65,6 +65,14 @@ def get_winstreak(df):
     return ws
 
 
+def get_result(score):
+    if score[0]>score[1]:
+        return "H"
+    elif score[0]<score[1]:
+        return "A"
+    return "D"
+
+
 def simulate_match(params, home_index, away_index):
     """
     Simulate a match between home and away teams.
@@ -76,12 +84,16 @@ def simulate_match(params, home_index, away_index):
     return int(home_goals), int(away_goals)
 
 
-def winner(result):
-    if result[0]>result[1]:
-        return "H"
-    elif result[0]<result[1]:
-        return "A"
-    return "D"
+def simulate_league(matches, params, teams_index):
+    for i, row in matches.iterrows():
+        home_index = teams_index[row["HomeTeam"]]
+        away_index = teams_index[row["AwayTeam"]]
+        home_goals, away_goals = simulate_match(params, home_index, away_index)
+        result = get_result((home_goals, away_goals))
+        matches.loc[i, "FTHG"] = home_goals
+        matches.loc[i, "FTAG"] = away_goals
+        matches.loc[i, "FTR"] = result
+    return matches
 
 
 def standings(df):
@@ -94,14 +106,14 @@ def standings(df):
     for i, row in df.iterrows():
         home = row["HomeTeam"]
         away = row["AwayTeam"]
-        result = (int(row["FTHG"]),int(row["FTAG"]))
-        win = winner(result)
+        score = (int(row["FTHG"]),int(row["FTAG"]))
+        result = get_result(score)
         # update results
-        if win == "H":
+        if result == "H":
             table.loc[table["Team"] == home, "Points"] += 3
             table.loc[table["Team"] == home, "W"] += 1
             table.loc[table["Team"] == away, "L"] += 1
-        elif win == "A":
+        elif result == "A":
             table.loc[table["Team"] == away, "Points"] += 3
             table.loc[table["Team"] == away, "W"] += 1
             table.loc[table["Team"] == home, "L"] += 1
@@ -112,13 +124,13 @@ def standings(df):
             table.loc[table["Team"] == away, "D"] += 1
         
         # update goals
-        table.loc[table["Team"] == home, "GF"] += result[0]
-        table.loc[table["Team"] == home, "GA"] += result[1]
-        table.loc[table["Team"] == home, "GD"] += (result[0] - result[1])
+        table.loc[table["Team"] == home, "GF"] += score[0]
+        table.loc[table["Team"] == home, "GA"] += score[1]
+        table.loc[table["Team"] == home, "GD"] += (score[0] - score[1])
 
-        table.loc[table["Team"] == away, "GF"] += result[1]
-        table.loc[table["Team"] == away, "GA"] += result[0]
-        table.loc[table["Team"] == away, "GD"] += (result[1] - result[0])
+        table.loc[table["Team"] == away, "GF"] += score[1]
+        table.loc[table["Team"] == away, "GA"] += score[0]
+        table.loc[table["Team"] == away, "GD"] += (score[1] - score[0])
     
     table = table.sort_values(by=["Points", "W", "GD"], ascending=False)
     table = table.set_index(pd.Index([i for i in range(1,21)]))
