@@ -85,15 +85,42 @@ def simulate_match(params, home_index, away_index):
 
 
 def simulate_league(matches, params, teams_index):
-    for i, row in matches.iterrows():
+    simulated = matches.copy(deep=True)
+    for i, row in simulated.iterrows():
         home_index = teams_index[row["HomeTeam"]]
         away_index = teams_index[row["AwayTeam"]]
         home_goals, away_goals = simulate_match(params, home_index, away_index)
         result = get_result((home_goals, away_goals))
-        matches.loc[i, "FTHG"] = home_goals
-        matches.loc[i, "FTAG"] = away_goals
-        matches.loc[i, "FTR"] = result
-    return matches
+        simulated.loc[i, "FTHG"] = home_goals
+        simulated.loc[i, "FTAG"] = away_goals
+        simulated.loc[i, "FTR"] = result
+    return simulated
+
+
+def momentum_sim_match(team_params, streak_param, home_streak, away_streak, home_index, away_index):
+    home_goals = np.random.poisson( lam = (team_params[0,home_index] * team_params[3,away_index]) * streak_param ** home_streak)
+    away_goals = np.random.poisson( lam = (team_params[1,home_index] * team_params[2,away_index]) * streak_param ** away_streak)
+    return int(home_goals), int(away_goals)
+
+
+def momentum_sim_league(matches, team_params, streak_param, teams_index, streaks):
+    simulated = matches.copy(deep=True)
+    for i, row in simulated.iterrows():
+        home_index = teams_index[row["HomeTeam"]]
+        away_index = teams_index[row["AwayTeam"]]
+        home_streak = streaks[row["MatchWeek"] - 1, home_index]
+        away_streak = streaks[row["MatchWeek"] - 1, away_index]
+        home_goals, away_goals = momentum_sim_match(team_params, streak_param, home_streak, away_streak, home_index, away_index)
+        result = get_result((home_goals, away_goals))
+        simulated.loc[i, "FTHG"] = home_goals
+        simulated.loc[i, "FTAG"] = away_goals
+        simulated.loc[i, "FTR"] = result
+        if row["MatchWeek"] < 38:
+            if result == "H":
+                streaks[row["MatchWeek"], home_index] = home_streak + 1
+            elif result == "A":
+                streaks[row["MatchWeek"], away_index] = away_streak + 1
+    return simulated
 
 
 def standings(df):
