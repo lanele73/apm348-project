@@ -3,6 +3,7 @@ import pandas as pd
 
 
 cross_ref = pd.read_csv("https://raw.githubusercontent.com/footballcsv/england/master/2010s/2014-15/eng.1.csv")
+
 teams_dict = {
     "Arsenal FC": "Arsenal",
     "Aston Villa FC": "Aston Villa",
@@ -24,6 +25,29 @@ teams_dict = {
     "Tottenham Hotspur FC": "Tottenham",
     "West Bromwich Albion FC": "West Brom",
     "West Ham United FC": "West Ham"
+    }
+
+teams_ind = {
+    "Arsenal": 0,
+    "Aston Villa": 1,
+    "Burnley": 2,
+    "Chelsea": 3,
+    "Crystal Palace": 4,
+    "Everton": 5,
+    "Hull": 6,
+    "Leicester": 7,
+    "Liverpool": 8,
+    "Man City": 9,
+    "Man United": 10,
+    "Newcastle": 11,
+    "QPR": 12,
+    "Southampton": 13,
+    "Stoke": 14,
+    "Sunderland": 15,
+    "Swansea": 16,
+    "Tottenham": 17,
+    "West Brom": 18,
+    "West Ham": 19
     }
 
 
@@ -123,7 +147,7 @@ def momentum_sim_league(matches, team_params, streak_param, teams_index, streaks
     return simulated
 
 
-def standings(df):
+def get_standings(df):
     """
     Given a dataframe of results, return final standings as a dataframe
     """
@@ -162,6 +186,50 @@ def standings(df):
     table = table.sort_values(by=["Points", "W", "GD"], ascending=False)
     table = table.set_index(pd.Index([i for i in range(1,21)]))
     return table
+
+
+def get_fast_standings(df):
+    """ Faster standings execution. """
+    columns = ["Team", "Points", "W", "GD"]
+    data = np.zeros((20,3), dtype=int)
+    for i, row in df.iterrows():
+        home_index = teams_ind[row["HomeTeam"]]
+        away_index = teams_ind[row["AwayTeam"]]
+        score = (int(row["FTHG"]),int(row["FTAG"]))
+        result = get_result(score)
+
+        if result == "H":
+            data[home_index, 0] += 3
+            data[home_index, 1] += 1
+        elif result == "A":
+            data[away_index, 0] += 3
+            data[away_index, 1] += 1
+        else:
+            data[home_index, 0] += 1
+            data[away_index, 0] += 1
         
+        data[home_index, 2] += (score[0] - score[1])
+        data[away_index, 2] += (score[1] - score[0])
     
+    table = pd.DataFrame(data=np.zeros((20,4), dtype=int), columns=columns)
+
+    table["Team"] = list(teams_ind.keys())
+    table["Points"] = data[:,0]
+    table["W"] = data[:,1]
+    table["GD"] = data[:,2]
     
+    table = table.sort_values(by=["Points", "W", "GD"], ascending=False)
+    table = table.set_index(pd.Index(range(1,21)))
+    return table
+
+
+def get_winner(table):
+    return table.head(1)["Team"]
+
+
+def get_top4(table):
+    return table.head(4)["Team"]
+
+
+def get_bottom4(table):
+    return table.tail(4)["Team"]
