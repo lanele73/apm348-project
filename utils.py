@@ -253,6 +253,55 @@ def simulate_with_standings(matches, params, teams_index):
     return table
 
 
+def sim_with_standings_momentum(matches, team_params, streak_param, teams_index, streaks=np.zeros((38,20), dtype=int)):
+    """
+    Matches is sorted by matchweek.
+    """
+    columns = ["Team", "Points", "W", "GD"]
+    data = np.zeros((20,3), dtype=int)
+    for i, row in matches.iterrows():
+        home_index = teams_index[row["HomeTeam"]]
+        away_index = teams_index[row["AwayTeam"]]
+        home_streak = streaks[row["MatchWeek"] - 1, home_index]
+        away_streak = streaks[row["MatchWeek"] - 1, away_index]
+
+        home_goals, away_goals = momentum_sim_match(team_params, streak_param, home_streak, away_streak, home_index, away_index)
+        result = get_result((home_goals, away_goals))
+
+        if result == "H":
+            data[home_index, 0] += 3
+            data[home_index, 1] += 1
+        elif result == "A":
+            data[away_index, 0] += 3
+            data[away_index, 1] += 1
+        else:
+            data[home_index, 0] += 1
+            data[away_index, 0] += 1
+        data[home_index, 2] += (home_goals - away_goals)
+        data[away_index, 2] += (away_goals - home_goals)
+
+        if row["MatchWeek"] < 38:
+            if result == "H":
+                streaks[row["MatchWeek"], home_index] = home_streak + 1
+                streaks[row["MatchWeek"], away_index] = 0
+            elif result == "A":
+                streaks[row["MatchWeek"], home_index] = 0
+                streaks[row["MatchWeek"], away_index] = away_streak + 1
+            else:
+                streaks[row["MatchWeek"], home_index] = 0
+                streaks[row["MatchWeek"], away_index] = 0
+
+    table = pd.DataFrame(data=np.zeros((20,4), dtype=int), columns=columns)
+    table["Team"] = list(teams_ind.keys())
+    table["Points"] = data[:,0]
+    table["W"] = data[:,1]
+    table["GD"] = data[:,2]
+    
+    table = table.sort_values(by=["Points", "W", "GD"], ascending=False)
+    table = table.set_index(pd.Index(range(1,21)))
+    return table
+
+
 def get_winner(table):
     return table.head(1)["Team"]
 
