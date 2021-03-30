@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+from scipy.stats import poisson
 
 cross_ref = pd.read_csv("https://raw.githubusercontent.com/footballcsv/england/master/2010s/2014-15/eng.1.csv")
 
@@ -312,3 +312,19 @@ def get_top4(table):
 
 def get_bottom4(table):
     return table.tail(4)["Team"]
+
+
+def get_probabilities(params, home_index, away_index):
+    home_goal_param = params[0, home_index] * params[3, away_index]
+    away_goal_param = params[1, home_index] * params[2, away_index]
+    probabilities = {}
+    size=16
+    scores = np.zeros((size,size))
+    for i in range(size):
+        for j in range(size):
+            scores[i,j] = poisson.pmf(i, home_goal_param) * poisson.pmf(j, away_goal_param)
+    
+    probabilities["H"] = np.sum(np.tril(scores, -1))
+    probabilities["D"] = np.sum(np.diagonal(scores))
+    probabilities["A"] = np.sum(np.triu(scores, 1))
+    return probabilities
