@@ -69,7 +69,7 @@ def get_gameweek(df, cross_ref):
         home = teams_dict[match["Team 1"]]
         away = teams_dict[match["Team 2"]]
         row = df.loc[(df["HomeTeam"] == home) & (df["AwayTeam"] == away)]
-        df.loc[i, "MatchWeek"] = match["Round"]
+        df.loc[row.index, "MatchWeek"] = match["Round"]
     return df
 
 
