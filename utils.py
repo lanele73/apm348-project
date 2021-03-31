@@ -332,4 +332,7 @@ def get_odds(params, home_index, away_index):
 
 
 def kelly_criterion(house_odds, model_odds):
-    return model_odds - (1-model_odds)/(house_odds-1)
+    """
+    Kelly criterion betting strategy.
+    """
+    return (1/model_odds * (house_odds) - 1) / (house_odds - 1)
