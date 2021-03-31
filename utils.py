@@ -314,17 +314,22 @@ def get_bottom4(table):
     return table.tail(4)["Team"]
 
 
-def get_probabilities(params, home_index, away_index):
+def get_odds(params, home_index, away_index):
     home_goal_param = params[0, home_index] * params[3, away_index]
     away_goal_param = params[1, home_index] * params[2, away_index]
-    probabilities = {}
+    # odds = {}
     size=16
     scores = np.zeros((size,size))
     for i in range(size):
         for j in range(size):
             scores[i,j] = poisson.pmf(i, home_goal_param) * poisson.pmf(j, away_goal_param)
     
-    probabilities["H"] = np.sum(np.tril(scores, -1))
-    probabilities["D"] = np.sum(np.diagonal(scores))
-    probabilities["A"] = np.sum(np.triu(scores, 1))
-    return probabilities
+    # odds["H"] = 1/np.sum(np.tril(scores, -1))
+    # odds["D"] = 1/np.sum(np.diagonal(scores))
+    # odds["A"] = 1/np.sum(np.triu(scores, 1))
+    odds = np.array([1/np.sum(np.tril(scores, -1)), 1/np.sum(np.diagonal(scores)), 1/np.sum(np.triu(scores, 1))])
+    return odds
+
+
+def kelly_criterion(house_odds, model_odds):
+    return model_odds - (1-model_odds)/(house_odds-1)
