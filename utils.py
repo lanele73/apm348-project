@@ -314,19 +314,18 @@ def get_bottom4(table):
     return table.tail(4)["Team"]
 
 
-def get_odds(params, home_index, away_index):
-    home_goal_param = params[0, home_index] * params[3, away_index]
-    away_goal_param = params[1, home_index] * params[2, away_index]
-    # odds = {}
+def get_odds(params, home_index, away_index, complex=True):
+    if complex:
+        home_goal_param = params[0, home_index] * params[3, away_index]
+        away_goal_param = params[1, home_index] * params[2, away_index]
+    else:
+        home_goal_param = params[0,home_index] * params[1, away_index]
+        away_goal_param = params[1,home_index] * params[0, away_index]
     size=16
     scores = np.zeros((size,size))
     for i in range(size):
         for j in range(size):
             scores[i,j] = poisson.pmf(i, home_goal_param) * poisson.pmf(j, away_goal_param)
-    
-    # odds["H"] = 1/np.sum(np.tril(scores, -1))
-    # odds["D"] = 1/np.sum(np.diagonal(scores))
-    # odds["A"] = 1/np.sum(np.triu(scores, 1))
     odds = np.array([1/np.sum(np.tril(scores, -1)), 1/np.sum(np.diagonal(scores)), 1/np.sum(np.triu(scores, 1))])
     return odds
 
@@ -336,3 +335,19 @@ def kelly_criterion(house_odds, model_odds):
     Kelly criterion betting strategy.
     """
     return (1/model_odds * (house_odds) - 1) / (house_odds - 1)
+
+
+def place_bet(current, house_odds, model_odds, result):
+    results_dict = results_dict = {0: "H", 1: "D", 2: "A"}
+    kelly = kelly_criterion(house_odds, model_odds)
+    best_bet = np.argmax(kelly)
+
+    if kelly[best_bet] > 0:
+        if kelly[best_bet] > 0.025:
+            kelly[best_bet] = 0.025
+        bet = round(current * kelly[best_bet],2)
+        current -= bet                          # Place bet
+        if results_dict[best_bet] == result:    # Win bet
+            current += bet * house_odds[best_bet]
+            current = round(current, 2)
+    return current
