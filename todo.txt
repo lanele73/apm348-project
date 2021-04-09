@@ -1,5 +1,0 @@
-[] Dispersion test
-[x] Gradient descent steps
-    - with/without momentum
-[] Run simulations to see outcome
-[] Team agency - select which matches to focus on 
